@@ -5,6 +5,7 @@ import { InfoItem } from './components';
 import { Button } from './components/Button';
 import { useEffect, useState } from 'react';
 import { GridItemType } from './types/GridItemType';
+import { items } from './data/items';
 const App = () => {
 
   const [playing, setPlaying] = useState<boolean>(false);
@@ -16,6 +17,28 @@ const App = () => {
   useEffect(()=> resetAndCreateGrid(), []);
 
   const resetAndCreateGrid = () => {
+    setTimeElapsed(0);
+    
+    setMoveCount(0);
+    setShownCount(0);
+    setGridItems([]);
+
+
+    let tmpGrid: GridItemType[] = [];
+    for(let i =0; i<(items.length * 2); i++){
+      tmpGrid.push({
+        item: null,
+        show: false,
+        permanentShow:false
+
+
+      });
+
+    }
+
+    setGridItems(tmpGrid);
+
+    setPlaying(true);
 
   }
 
