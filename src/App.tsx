@@ -6,6 +6,7 @@ import { Button } from './components/Button';
 import { useEffect, useState } from 'react';
 import { GridItemType } from './types/GridItemType';
 import { items } from './data/items';
+import { GridItem } from './components/GridItem';
 const App = () => {
 
   const [playing, setPlaying] = useState<boolean>(false);
@@ -15,6 +16,11 @@ const App = () => {
   const [gridItems, setGridItems] = useState<GridItemType[]>([]);
 
   useEffect(()=> resetAndCreateGrid(), []);
+
+
+  const handleItemClick = (index:number) =>{
+
+  }
 
   const resetAndCreateGrid = () => {
     setTimeElapsed(0);
@@ -75,6 +81,22 @@ const App = () => {
 
       <C.GridArea>
         <C.Grid>
+          {
+            gridItems.map((item, index) =>(
+              <GridItem
+
+              key={index}
+              item={item}
+              onClick={() => handleItemClick(index)}
+              
+              
+              
+              
+              />
+             
+
+            ))
+          }
 
         </C.Grid>
 
