@@ -3,109 +3,75 @@ import logoImage from './assets/devmemory_logo.png';
 import RestartIcon from './svgs/restart.svg';
 import { InfoItem } from './components';
 import { Button } from './components/Button';
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer } from 'react';
 import { GridItemType } from './types/GridItemType';
 import { items } from './data/items';
 import { GridItem } from './components/GridItem';
 import { FormatTimeElapsed } from './helpers/FormatTimeElapsed';
+import { AppState } from './types/AppState';
+import { reducer } from './reducers/reducer';
+
 const App = () => {
 
-  const [playing, setPlaying] = useState<boolean>(false);
-  const [timeElapsed, setTimeElapsed] = useState<number>(0);
-  const [moveCount, setMoveCount] = useState<number>(0);
-  const [shownCount, setShownCount] = useState<number>(0);
-  const [gridItems, setGridItems] = useState<GridItemType[]>([]);
 
   useEffect(() => resetAndCreateGrid(), []);
 
+  const initialState: AppState = {
+    playing: false,
+    timeElapsed: 0,
+    moveCount: 0,
+    shownCount: 0,
+    gridItems: [],
+  };
+
+
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      if (playing) setTimeElapsed(timeElapsed + 1);
+      if (state.playing) {
+        dispatch({ type: 'increment_time_elapsed' });
+      }
     }, 1000);
+
     return () => clearInterval(timer);
-  }, [playing, timeElapsed]);
+  }, [state.playing, state.timeElapsed]);
+
+
+
+
 
 
   const handleItemClick = (index: number) => {
-    if (playing && index !== null && shownCount < 2) {
-      let tmpGrid = [...gridItems];
-      if (tmpGrid[index].permanentShow === false && tmpGrid[index].show === false) {
-        tmpGrid[index].show = true;
-        setShownCount(shownCount + 1);
-      }
-      setGridItems(tmpGrid);
-    }
+    dispatch({ type: 'handle_item_click', payload: index });
+  };
 
-  }
+
 
   useEffect(() => {
-    if (shownCount === 2) {
-      let opened = gridItems.filter(item => item.show === true);
-      if (opened.length === 2) {
-        if (opened[0].item === opened[1].item) {
-          //verifica se ambos são iguais se for mantem a imagem a mostra
-          let tmpGrid = [...gridItems];
-          for (let i in tmpGrid) {
-            if (tmpGrid[i].show) {
-              tmpGrid[i].permanentShow = true;
-              tmpGrid[i].show = false;
-            }
-          }
-          setGridItems(tmpGrid);
-          setShownCount(0);
-
-        } else {
-          setTimeout(() => {
-
-            let tmpGrid = [...gridItems];
-            for (let i in tmpGrid) {
-              tmpGrid[i].show = false;
-            }
-            setGridItems(tmpGrid);
-            setShownCount(0);
-          }, 1000);
-
-        }
-
-
-        setMoveCount(moveCount => moveCount + 1);
-      }
-
+    if (state.shownCount === 2) {
+      dispatch({ type: 'check_match' });
     }
+  }, [state.shownCount, state.gridItems]);
 
-  }, [shownCount, gridItems]);
 
 
-  //verifica se o jogo acabou
+
   useEffect(() => {
-    if (moveCount > 0 && gridItems.every(item => item.permanentShow === true)) {
-      setPlaying(false);
-    }
+    dispatch({ type: 'check_game_over' });
+  }, [state.moveCount, state.gridItems]);
 
-
-  }, [moveCount, gridItems]);
 
   const resetAndCreateGrid = () => {
-    setTimeElapsed(0);
+    const tmpGrid: GridItemType[] = [];
 
-    setMoveCount(0);
-    setShownCount(0);
-    setGridItems([]);
-
-
-    let tmpGrid: GridItemType[] = [];
     for (let i = 0; i < (items.length * 2); i++) {
       tmpGrid.push({
         item: null,
         show: false,
         permanentShow: false
-
-
       });
-
     }
-
 
     for (let w = 0; w < 2; w++) {
       for (let i = 0; i < items.length; i++) {
@@ -117,11 +83,13 @@ const App = () => {
       }
     }
 
-    setGridItems(tmpGrid);
+    dispatch({ type: 'set_grid_items', payload: tmpGrid });
+    dispatch({ type: 'set_playing', payload: true });
+    dispatch({ type: 'set_time_elapsed', payload: 0 });
+    dispatch({ type: 'set_shown_count', payload: 0 });
+    dispatch({ type: 'set_shown_count', payload: 0 });
+  };
 
-    setPlaying(true);
-
-  }
 
 
   return (
@@ -134,8 +102,8 @@ const App = () => {
 
         <C.InfoArea>
 
-          <InfoItem label='Tempo' value={FormatTimeElapsed(timeElapsed)} />
-          <InfoItem label='Movimentos' value={moveCount.toString()} />
+          <InfoItem label='Tempo' value={FormatTimeElapsed(state.timeElapsed)} />
+          <InfoItem label='Movimentos' value={state.moveCount.toString()} />
         </C.InfoArea>
 
 
@@ -147,7 +115,7 @@ const App = () => {
       <C.GridArea>
         <C.Grid>
           {
-            gridItems.map((item, index) => (
+            state.gridItems.map((item, index) => (
               <GridItem
 
                 key={index}
