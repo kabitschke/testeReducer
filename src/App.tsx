@@ -30,7 +30,7 @@ const App = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       if (state.playing) {
-        dispatch({ type: 'increment_time_elapsed' });
+        dispatch({ type: 'set_time_elapsed', payload: state.timeElapsed +1});
       }
     }, 1000);
 
@@ -48,11 +48,16 @@ const App = () => {
 
 
 
+
   useEffect(() => {
-    if (state.shownCount === 2) {
-      dispatch({ type: 'check_match' });
+    dispatch({ type: 'check_match' });
+    if (state.shownCount === 2 && state.gridItems.filter(item => item.show === true).length === 2) {
+      setTimeout(() => {
+        dispatch({ type: 'reset_not_matching_items' });
+      }, 1000);
     }
-  }, [state.shownCount, state.gridItems]);
+  }, [state.shownCount, state.gridItems, dispatch]);
+  
 
 
 
@@ -63,16 +68,20 @@ const App = () => {
 
 
   const resetAndCreateGrid = () => {
+    dispatch({ type: 'set_time_elapsed', payload: 0 });
+    dispatch({ type: 'set_move_count', payload: 0 });
+    dispatch({ type: 'set_shown_count', payload: 0 });
+    dispatch({ type: 'set_grid_items', payload: [] });
+  
     const tmpGrid: GridItemType[] = [];
-
-    for (let i = 0; i < (items.length * 2); i++) {
+    for (let i = 0; i < items.length * 2; i++) {
       tmpGrid.push({
         item: null,
         show: false,
         permanentShow: false
       });
     }
-
+  
     for (let w = 0; w < 2; w++) {
       for (let i = 0; i < items.length; i++) {
         let pos = -1;
@@ -82,13 +91,11 @@ const App = () => {
         tmpGrid[pos].item = i;
       }
     }
-
+  
     dispatch({ type: 'set_grid_items', payload: tmpGrid });
     dispatch({ type: 'set_playing', payload: true });
-    dispatch({ type: 'set_time_elapsed', payload: 0 });
-    dispatch({ type: 'set_shown_count', payload: 0 });
-    dispatch({ type: 'set_shown_count', payload: 0 });
   };
+  
 
 
 

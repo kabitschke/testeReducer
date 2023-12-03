@@ -47,6 +47,9 @@ type CHECK_GAME_OVER = {
 }
 
 
+type RESET_NOT_MATCHING_ITEMS = {
+  type: 'reset_not_matching_items';
+};
 
 
 
@@ -56,7 +59,9 @@ type CHECK_GAME_OVER = {
 
 
 
-type ListAction = SET_PLAYING | SET_TIME_ELAPSED | SET_MOVE_COUNT | SET_SHOWN_COUNT | SET_GRID_ITEMS | CHECK_MATCH | INCREMENT_TIME_ELAPSED | HANDLE_ITEM_CLICK | CHECK_GAME_OVER;
+
+
+type ListAction = SET_PLAYING | SET_TIME_ELAPSED | SET_MOVE_COUNT | SET_SHOWN_COUNT | SET_GRID_ITEMS | CHECK_MATCH | INCREMENT_TIME_ELAPSED | HANDLE_ITEM_CLICK | CHECK_GAME_OVER | RESET_NOT_MATCHING_ITEMS;
 
 export const reducer = (state: AppState, action: ListAction) => {
 
@@ -66,21 +71,27 @@ export const reducer = (state: AppState, action: ListAction) => {
     case 'set_time_elapsed':
       return { ...state, timeElapsed: action.payload };
 
-    case 'increment_time_elapsed':
-      return { ...state, timeElapsed: state.timeElapsed + 1 };
+    // case 'increment_time_elapsed':
+    //   return { ...state, timeElapsed: state.timeElapsed + 1 };
 
     case 'set_move_count':
       return { ...state, moveCount: action.payload }
 
     case 'set_shown_count':
-      return { ...state, shownCount: state.shownCount + 1 }
+      return { ...state, shownCount: action.payload }
+
+    case 'reset_not_matching_items':
+      const tmpGrid = state.gridItems.map(item => (item.show ? { ...item, show: false } : item));          
+     return { ...state, gridItems: tmpGrid, shownCount: 0};  
+        
+        
 
     case 'set_grid_items':
       return { ...state, gridItems: action.payload }
 
     case 'handle_item_click':
 
-      if (state.playing && action.payload !== null && state.shownCount < 2) {//problema com shownCount
+      if (state.playing && action.payload !== null && state.shownCount < 2) {
 
         const tmpGrid = state.gridItems.map((item, i) =>
           i === action.payload &&
@@ -98,26 +109,36 @@ export const reducer = (state: AppState, action: ListAction) => {
       }
       return state;
 
-    case 'check_match':
-      const opened = state.gridItems.filter(item => item.show === true);
-      if (opened.length === 2 && opened[0].item === opened[1].item) {
-        const tmpGrid = state.gridItems.map(item =>
-          item.show ? { ...item, permanentShow: true, show: false } : item
-        );
-        return {
-          ...state,
-          gridItems: tmpGrid,
-          shownCount: 0,
-          moveCount: state.moveCount + 1
-        };
-      } else {
-        setTimeout(() => {
-          const tmpGrid = state.gridItems.map(item => ({ ...item, show: false }));
-          return { ...state, gridItems: tmpGrid, shownCount: 0 };
-        }, 1000);
-        return state;
-      }
 
+      case 'check_match':
+        const opened = state.gridItems.filter(item => item.show === true);
+
+        if (opened.length === 2 && opened[0].item !== opened[1].item) {
+          return {
+            ...state,                
+            moveCount: state.moveCount + 1
+          };
+
+        }
+  
+        if (opened.length === 2 && opened[0].item === opened[1].item) {
+          const tmpGrid = state.gridItems.map(item =>
+            item.show ? { ...item, permanentShow: true, show: false } : item
+          );
+          return {
+            ...state,
+            gridItems: tmpGrid,
+            shownCount: 0,            
+            moveCount: state.moveCount + 1
+          };
+
+        } else {
+          setTimeout(() => {
+            const tmpGrid = state.gridItems.map(item => ({ ...item, show: false }));
+            return { ...state, gridItems: tmpGrid, shownCount: 0 };
+          }, 1000);
+          return state;
+        }
 
 
     case 'check_game_over':
